@@ -31,7 +31,7 @@
 
 import csv  # package for csv files
 import twitter  # package for twitter
-import ____  # package for regular expressions
+import re  # package for regular expressions
 
 # Twitter credentials
 # Please, try to get your own credentials. In case that you had problems
@@ -41,44 +41,44 @@ CONSUMER_SECRET = 'l6gKb7Nzm2dSuM6J0WozK5SGVvBdV7drlvwJMKDhINvaebvOFE'
 OAUTH_TOKEN = '365628507-vTziO7gDaDTCeCtn4IppIQAje3dQ4sLmIsUmjTGQ'
 OAUTH_TOKEN_SECRET = 'yz5NkkWd3IORVI7kH9LIiowf8uo3KNPSzCHKVEDTmGaee'
 
-auth = twitter.oauth.OAuth(_________, OAUTH_TOKEN_SECRET,
-                           _________, CONSUMER_SECRET)
+auth = twitter.oauth.OAuth(OAUTH_TOKEN, OAUTH_TOKEN_SECRET,
+                           CONSUMER_KEY, CONSUMER_SECRET)
 
-twitter_api = twitter.Twitter(_______)  # We need to pass the auth parameter
+twitter_api = twitter.Twitter(auth=auth)  # We need to pass the auth parameter
 
-search_word = _________  # We will look for '#starwars'
+search_word = '#starwars'  # We will look for '#starwars'
 count = 100
 
 # Add the parameters for search tweets (q is the parameter for query...)
-search_results = twitter_api.search.tweets(q=_______, count=______, lang='es')
+search_results = twitter_api.search.tweets(q=search_word, count=count, lang='es')
 # The results are in the 'statuses' key
-statuses = search_results[__________]
+statuses = search_results['statuses']
 # print the 'statuses[0].keys()' variable to find the keys to get the results
-print(__________)
+print(statuses[0].keys())
 
 # We create a csv, with columns 'user', 'text', 'geo', 'coordinates',
 # 'favorited' and 'hashtags'
-twitter_file = open('star_wars_twitter.csv', ____)  # Write open
+twitter_file = open('star_wars_twitter.csv', "w", newline="")
 writer = csv.writer(twitter_file, delimiter=',')
-headers = [____, ____, ____, ____, ____, _____]
-writer.writerow(_______)  # Write the headers
+headers = ['user', 'text', 'geo', 'coordinates', 'favorited', 'hashtags']
+writer.writerow(headers)  # Write the headers
 
 for elem in statuses:
     row = []
 
-    text = elem[____]
-    user = elem[_____]['name']  # We get the name for the user
-    geo = elem[____]
-    coordinates = elem[______]
-    favorited = elem[______]
+    text = elem['text']
+    user = elem['user']['name']  # We get the name for the user
+    geo = elem['geo']
+    coordinates = elem['coordinates']
+    favorited = elem['favorited']
 
     # Let's clean a little bit the text using regular expressions
     # Change RT chars by RETWEET
-    text = re.sub(r'RT', r'_______', text)
+    text = re.sub(r'RT', r'RETWEET', text)
     # Change the user in tweet "@..." by USER
-    text = re.sub(r'_______', r'USER', text)
+    text = re.sub(r'@\w+', r'USER', text)
     # Let's find all the hashtags "#..." from the tweet
-    hashtags = re.________(r'#\w+', ______)
+    hashtags = re.ﬁndall(r'#\w+', text)
 
     row = [user, text, geo, coordinates, favorited, hashtags]
     try:

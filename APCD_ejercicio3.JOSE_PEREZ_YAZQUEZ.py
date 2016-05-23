@@ -23,40 +23,40 @@
 import csv  # package for csv files
 import requests  # package to execute requests to the API
 
-search_word = _______  # We are going to look for 'star wars'
+search_word = 'star wars'  # We are going to look for 'star wars'
 url = "http://www.omdbapi.com/?s=" + search_word
-content = requests.get(______).json()  # We get the url
+content = requests.get(url).json()  # We get the url
 
 # print the 'content' variable to find the key to get the results
-results = content[_______]
+results = content['Search']
 
 # We want only the movies results
 movies = []
 for result in results:
-    ________ = result[_______]
-    if _______ == 'movie':
+    type = result['Type']
+    if type == 'movie':
         movies.append(result)
 
 # We create a csv file, with columns 'Genre', 'Plot', 'Type', 'Title'
 # and 'imdbRating'
-movies_file = open('star_wars_movies.csv', ____)  # Write open
+movies_file = open('star_wars_movies.csv', "w", newline="")  # Write open
 writer = csv.writer(movies_file, delimiter=',')
-headers = [______, 'Plot', ______, 'Title', ______]  # The headers
+headers = ['Genre', 'Plot', 'Type', 'Title','imdbRating']  # The headers
 writer.writerow(headers)
 
 for movie in movies:
     # print the 'movie' variable to find the key to get the id
-    movie_id = movie[______]  # We get the movie id to make the request
+    movie_id = movie['imdbID']  # We get the movie id to make the request
     # We get every result by id to get more info
     url = "http://www.omdbapi.com/?i=" + movie_id
     content = requests.get(url).json()
 
     row = []
-    genre = content[______]
-    plot = content[______]
-    type = content[______]
-    title = content[_______]
-    imdbRating = content[_________]
+    genre = content['Genre']
+    plot = content['Plot']
+    type = content['Type']
+    title = content['Title']
+    imdbRating = content['imdbRating']
 
     row = [genre, plot, type, title, imdbRating]
     try:

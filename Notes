@@ -1,0 +1,12 @@
+from bs4 import BeautifulSoup
+def translate_to_spanish(text):
+    # User agent
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.111 Safari/537.36'
+    headers = { 'User-Agent': user_agent}
+    #google_translator_url = 'https://translate.google.es/#en/es/' + text
+    google_translator_url = 'https://translate.google.es/#en/es/HOLA MUNDO'
+    soup = BeautifulSoup(requests.get(google_translator_url, headers=headers).text, 'html5lib')
+    translation = soup.find("span", {"id": "result_box"})
+    print(translation)
+
+

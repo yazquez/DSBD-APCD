@@ -24,8 +24,8 @@
 # Look at the terms and the robots.txt file
 # http://estaticos.marca.com/robots.txt
 from bs4 import BeautifulSoup
-import ______  # json package
-import _______  # Requests package
+import json  # json package
+import requests  # Requests package
 
 # User agent
 user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.111 Safari/537.36'
@@ -36,31 +36,31 @@ headers = {
 
 url = "http://www.marca.com/futbol/primera/calendario.html"
 # The first parameter is the 'text' from the url requested
-soup = BeautifulSoup(__________________, 'html5lib')
+soup = BeautifulSoup(requests.get(url, headers=headers).text, 'html5lib')
 
 resultados = []
 jornadas = soup('div', 'jornadaCalendario')
 # Once we have the 'jornadas', we need to iterate over them
-for ______________________:
+for jornada in jornadas:
     # Date and number data
     datos_jornada = jornada.find('div', 'datosJornada')
 
     # We need to extract the name and the date. We need to look at the page
     # HTML code to check the tag name
-    nombre_jornada = datos_jornada.find(___).text
-    fecha_jornada = datos_jornada.find(___).text
+    nombre_jornada = datos_jornada.find('h2').text
+    fecha_jornada = datos_jornada.find('p').text
 
     # Matches data
     # To set the parameters, we need to get the tag and the class associated
-    partidos_jornada = jornada.find(____, ________________)
+    partidos_jornada = jornada.find('ul', 'partidoJornada')
     for partido_jornada in partidos_jornada:
         local = ""
         visitante = ""
         try:
             # Finally, let's use the class to find the desired data
-            local = partido_jornada.find('span', ______).text
-            visitante = partido_jornada.find('span', ________).text
-            resultado = partido_jornada.find('span', __________).text
+            local = partido_jornada.find('span', 'local').text
+            visitante = partido_jornada.find('span', 'visitante').text
+            resultado = partido_jornada.find('span', 'resultado').text
         except:
             pass
         if 'Betis' in [local, visitante]:
@@ -69,11 +69,11 @@ for ______________________:
             # We use a dictionary to transform it to a JSON file
             partido = {}
             partido['local'] = local
-            partido[_________] = visitante
-            partido[_________] = __________
-            partido[_________] = __________
+            partido['visitante'] = visitante
+            partido['resultado'] = resultado
+            partido['fecha_jornada'] = fecha_jornada
             resultados.append(partido)
 
 # We open a file to write our dictionary in JSON format
-with open('json_matches.json', ___) as outfile:
-    json._____(________, outfile)
+with open('json_matches.json', 'w') as outfile:
+    json.dump(resultados, outfile)
