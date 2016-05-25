@@ -1,4 +1,3 @@
-
 # coding: utf-8
 
 # # Twitter y MongoDB
@@ -54,8 +53,6 @@
 
 # ## ¡A programar!
 
-
-
 # Importing packages
 from bson.objectid import ObjectId
 import datetime
@@ -65,13 +62,12 @@ import twitter
 
 
 # Twitter configuration, we need to use the parameters that we got before
-ACCESS_TOKEN = 'L6DVCO93EbxjNEgas84YTm1VTMKPwM6ESloiQxm'
-ACCESS_TOKEN_SECRET = 'czdEHotbceFrOLWJBGRIvEEZ4Er6efmiKLZRpjnL6SBri'
-CONSUMER_KEY = '4cHDgH2d0FygYzFq7logoqTxa'
-CONSUMER_SECRET = 'eZQohkjspqpd8xVQIMjTwwo9kgtcpopb7vC23hRtDpSEL8JzRJ'
+ACCESS_TOKEN = '****'
+ACCESS_TOKEN_SECRET = '****'
+CONSUMER_KEY = '****'
+CONSUMER_SECRET = '****'
 
-auth = twitter.oauth.OAuth(ACCESS_TOKEN, ACCESS_TOKEN_SECRET,
-                           CONSUMER_KEY, CONSUMER_SECRET)
+auth = twitter.oauth.OAuth(ACCESS_TOKEN, ACCESS_TOKEN_SECRET, CONSUMER_KEY, CONSUMER_SECRET)
 
 twitter_api = twitter.Twitter(auth=auth)
 
@@ -98,13 +94,7 @@ count = 100
 search_results = twitter_api.search.tweets(q=search_word, count=count, lang='es')
 search_results
 
-
-# In[ ]:
-
 search_results['statuses']
-
-
-# In[ ]:
 
 search_results['statuses'][0]
 
