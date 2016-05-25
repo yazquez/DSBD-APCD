@@ -4,7 +4,7 @@
 # # Twitter y MongoDB
 
 # De las múltiples librerías que nos permiten usar la API de Twitter, usaremos [Python Twitter Tools](https://github.com/sixohsix/twitter). Con esta librería podremos descargar tweets e información de sus usuarios, así que el **ejercicio** será modelar estas dos entidades y almacenar instancias de ellas.
-# 
+#
 # La idea de este ejercicio está basada en uno anterior que realizó [Gabriel Muñoz](https://twitter.com/Gabi_mu_ri).
 
 # ## Requisitos
@@ -54,7 +54,7 @@
 
 # ## ¡A programar!
 
-# In[ ]:
+
 
 # Importing packages
 from bson.objectid import ObjectId
@@ -63,13 +63,12 @@ from mongokit import Connection, Document
 import twitter
 
 
-# In[ ]:
 
 # Twitter configuration, we need to use the parameters that we got before
-ACCESS_TOKEN = ''
-ACCESS_TOKEN_SECRET = ''
-CONSUMER_KEY = ''
-CONSUMER_SECRET = ''
+ACCESS_TOKEN = 'L6DVCO93EbxjNEgas84YTm1VTMKPwM6ESloiQxm'
+ACCESS_TOKEN_SECRET = 'czdEHotbceFrOLWJBGRIvEEZ4Er6efmiKLZRpjnL6SBri'
+CONSUMER_KEY = '4cHDgH2d0FygYzFq7logoqTxa'
+CONSUMER_SECRET = 'eZQohkjspqpd8xVQIMjTwwo9kgtcpopb7vC23hRtDpSEL8JzRJ'
 
 auth = twitter.oauth.OAuth(ACCESS_TOKEN, ACCESS_TOKEN_SECRET,
                            CONSUMER_KEY, CONSUMER_SECRET)
@@ -93,7 +92,7 @@ db = connection[DB_NAME]
 # In[ ]:
 
 # Obtaining tweets
-search_word = '__________'  # We can search by a word, a text or a hashtag
+search_word = '#starwars'  # We can search by a word, a text or a hashtag
 count = 100
 
 search_results = twitter_api.search.tweets(q=search_word, count=count, lang='es')
@@ -124,7 +123,7 @@ search_results['statuses'][0]['user']
 # * `urls`
 # * `mentions`
 # * `user_id`
-# 
+#
 # Para los usuarios podríamos usar algo así:
 # * `created_at`
 # * `screen_name`
@@ -134,19 +133,22 @@ search_results['statuses'][0]['user']
 # * `followers_count`
 # * `friends_count`
 # * `profile_image_url`
-# 
+#
 # Algunos de ellos no existen como tal en los resultados de la API, pero para ello podremos programar funciones que nos transformen los resultados en datos válidos para el modelo.
 
-# In[ ]:
 
 @connection.register
 class Tweet(Document):
     __collection__ = 'tweets'
     __database__ = DB_NAME
     structure = {
-        #########################################
-        # Here we need a block for the properties
-        #########################################
+        'created_at': datetime.datetime,
+        'text': basestring,
+        'retweet_count': int,
+        'favorite_count': int,
+        'hashtags': basestring,
+        'urls': basestring,
+        'mentions': basestring,
         'user_id': ObjectId
     }
     required_fields = ['text', 'user_id']
@@ -161,9 +163,14 @@ class User(Document):
     __collection__ = 'users'
     __database__ = DB_NAME
     structure = {
-        #########################################
-        # Here we need a block for the properties
-        #########################################
+        'created_at': datetime.datetime,
+        'screen_name': basestring,
+        'name': basestring,
+        'description': basestring,
+        'favourites_count': int,
+        'followers_count': int,
+        'friends_count': int,
+        'profile_image_url': basestring
     }
     required_fields = ['screen_name']
     default_values = {
@@ -180,8 +187,6 @@ class User(Document):
     ]
 
 
-# In[ ]:
-
 # Function for transform the datetime from Twitter to Python's format
 def twitter_date_to_datetime(twitter_date):
     return datetime.datetime.strptime(twitter_date, '%a %b %d %H:%M:%S +0000 %Y')
@@ -192,29 +197,29 @@ def get_or_create_user(api_user):
     user = db.users.find_one({'screen_name': api_user['screen_name']})
     if not user:
         user = db.User()
-        
+
         user['created_at'] = twitter_date_to_datetime(api_user['created_at'])
         user['screen_name'] = api_user['screen_name']
-        
+
         ###############################################
         # Here we need a block for link more properties
         ###############################################
-        
+
         user.validate()
-        
+
         ####################
         # After validate ...
         ####################
-    
+
     return user
 
 # Tweet constructor
 def create_tweet(api_tweet, user):
     tweet = db.Tweet()
-    
+
     tweet['created_at'] = twitter_date_to_datetime(api_tweet['created_at'])
     tweet['text'] = api_tweet['text']
-    
+
     ###############################################
     # Here we need a block for link more properties
     ###############################################
@@ -222,19 +227,19 @@ def create_tweet(api_tweet, user):
     hashtags = [hashtag['text'] for hashtag in api_tweet['entities']['hashtags']]
     urls = [url['expanded_url'] for url in api_tweet['entities']['urls']]
     mentions = [mention['screen_name'] for mention in api_tweet['entities']['user_mentions']]
-    
+
     tweet['hashtags'] = hashtags
     tweet['urls'] = urls
     tweet['mentions'] = mentions
 
     tweet['user_id'] = user['_id']
-    
+
     tweet.validate()
-    
+
     ####################
     # After validate ...
     ####################
-    
+
     return tweet
 
 
