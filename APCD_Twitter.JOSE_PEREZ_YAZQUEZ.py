@@ -2,7 +2,8 @@
 
 # # Twitter y MongoDB
 
-# De las múltiples librerías que nos permiten usar la API de Twitter, usaremos [Python Twitter Tools](https://github.com/sixohsix/twitter). Con esta librería podremos descargar tweets e información de sus usuarios, así que el **ejercicio** será modelar estas dos entidades y almacenar instancias de ellas.
+# De las múltiples librerías que nos permiten usar la API de Twitter, usaremos [Python Twitter Tools](https://github.com/sixohsix/twitter).
+# Con esta librería podremos descargar tweets e información de sus usuarios, así que el **ejercicio** será modelar estas dos entidades y almacenar instancias de ellas.
 #
 # La idea de este ejercicio está basada en uno anterior que realizó [Gabriel Muñoz](https://twitter.com/Gabi_mu_ri).
 
@@ -61,49 +62,6 @@ import twitter
 
 
 
-# Twitter configuration, we need to use the parameters that we got before
-ACCESS_TOKEN = '****'
-ACCESS_TOKEN_SECRET = '****'
-CONSUMER_KEY = '****'
-CONSUMER_SECRET = '****'
-
-auth = twitter.oauth.OAuth(ACCESS_TOKEN, ACCESS_TOKEN_SECRET, CONSUMER_KEY, CONSUMER_SECRET)
-
-twitter_api = twitter.Twitter(auth=auth)
-
-
-# In[ ]:
-
-# MongoDB configuration
-# Important: For creating a DB for each one of use, we need to use an unique name in the DB_NAME constant,
-# like our name un snake_case, e.g.: jose_manuel_camacho
-connection = Connection(host='localhost', port=27017)
-DB_NAME = ''
-
-db = connection[DB_NAME]
-
-
-# Vamos a obtener tweets, para ellos usaremos la API y veremos que nos devuelve.
-
-# In[ ]:
-
-# Obtaining tweets
-search_word = '#starwars'  # We can search by a word, a text or a hashtag
-count = 100
-
-search_results = twitter_api.search.tweets(q=search_word, count=count, lang='es')
-search_results
-
-search_results['statuses']
-
-search_results['statuses'][0]
-
-
-# In[ ]:
-
-search_results['statuses'][0]['user']
-
-
 # Vamos a crear nuestros modelos. Primero haremos uno para los tweets, donde podremos utilizar las propiedades que querramos, pero por ejemplo, podriamos usar los siguientes:
 # * `created_at`
 # * `text`
@@ -127,6 +85,14 @@ search_results['statuses'][0]['user']
 # Algunos de ellos no existen como tal en los resultados de la API, pero para ello podremos programar funciones que nos transformen los resultados en datos válidos para el modelo.
 
 
+
+# MongoDB configuration
+# Important: For creating a DB for each one of use, we need to use an unique name in the DB_NAME constant,
+# like our name un snake_case, e.g.: jose_manuel_camacho
+connection = Connection(host='localhost', port=27017)
+DB_NAME = 'jose_perez_yazquez'
+db =  connection[DB_NAME]
+
 @connection.register
 class Tweet(Document):
     __collection__ = 'tweets'
@@ -136,9 +102,9 @@ class Tweet(Document):
         'text': basestring,
         'retweet_count': int,
         'favorite_count': int,
-        'hashtags': basestring,
-        'urls': basestring,
-        'mentions': basestring,
+        'hashtags': [basestring],
+        'urls': [basestring],
+        'mentions': [basestring],
         'user_id': ObjectId
     }
     required_fields = ['text', 'user_id']
@@ -176,11 +142,6 @@ class User(Document):
         }
     ]
 
-
-# Function for transform the datetime from Twitter to Python's format
-def twitter_date_to_datetime(twitter_date):
-    return datetime.datetime.strptime(twitter_date, '%a %b %d %H:%M:%S +0000 %Y')
-
 ## Constructors for the documents
 # User getter and constructor
 def get_or_create_user(api_user):
@@ -190,16 +151,16 @@ def get_or_create_user(api_user):
 
         user['created_at'] = twitter_date_to_datetime(api_user['created_at'])
         user['screen_name'] = api_user['screen_name']
-
-        ###############################################
-        # Here we need a block for link more properties
-        ###############################################
+        user['name'] = api_user['name']
+        user['description'] = api_user['description']
+        user['favourites_count'] = api_user['favourites_count']
+        user['followers_count'] = api_user['followers_count']
+        user['friends_count'] = api_user['friends_count']
+        user['profile_image_url'] = api_user['profile_image_url']
 
         user.validate()
 
-        ####################
-        # After validate ...
-        ####################
+        user.save()
 
     return user
 
@@ -209,10 +170,9 @@ def create_tweet(api_tweet, user):
 
     tweet['created_at'] = twitter_date_to_datetime(api_tweet['created_at'])
     tweet['text'] = api_tweet['text']
-
-    ###############################################
-    # Here we need a block for link more properties
-    ###############################################
+    tweet['retweet_count'] = api_tweet['retweet_count']
+    tweet['favorite_count'] = api_tweet['favorite_count']
+    tweet['user_id'] = api_tweet['user']['id']
 
     hashtags = [hashtag['text'] for hashtag in api_tweet['entities']['hashtags']]
     urls = [url['expanded_url'] for url in api_tweet['entities']['urls']]
@@ -226,17 +186,41 @@ def create_tweet(api_tweet, user):
 
     tweet.validate()
 
-    ####################
-    # After validate ...
-    ####################
+    tweet.save()
 
     return tweet
 
 
+
+# Function for transform the datetime from Twitter to Python's format
+def twitter_date_to_datetime(twitter_date):
+    return datetime.datetime.strptime(twitter_date, '%a %b %d %H:%M:%S +0000 %Y')
+
+
+# Vamos a obtener tweets, para ellos usaremos la API y veremos que nos devuelve.
+def get_tweets(search_word):
+    # Twitter configuration, we need to use the parameters that we got before
+    CONSUMER_KEY = '****'
+    CONSUMER_SECRET = '****'
+    OAUTH_TOKEN = '****'
+    OAUTH_TOKEN_SECRET = '****'
+
+    auth = twitter.oauth.OAuth(OAUTH_TOKEN, OAUTH_TOKEN_SECRET, CONSUMER_KEY, CONSUMER_SECRET)
+
+    twitter_api = twitter.Twitter(auth=auth)
+
+    # Obtaining tweets
+    count = 100
+    search_results = twitter_api.search.tweets(q=search_word, count=count, lang='es')
+
+    return search_results
+
+
+
+
+search_results = get_tweets('#starwars')
+
 # Por último, vamos a rellenar nuestra base de datos con los resultados obtenidos y comprobar en MongoChef los resultados.
-
-# In[ ]:
-
 for result in search_results['statuses']:
     api_user = result['user']
     user = get_or_create_user(api_user)
