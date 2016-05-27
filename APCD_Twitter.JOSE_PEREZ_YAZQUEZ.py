@@ -60,7 +60,7 @@ import datetime
 from mongokit import Connection, Document
 import twitter
 
-
+#
 
 # Vamos a crear nuestros modelos. Primero haremos uno para los tweets, donde podremos utilizar las propiedades que querramos, pero por ejemplo, podriamos usar los siguientes:
 # * `created_at`
@@ -87,12 +87,14 @@ import twitter
 
 
 # MongoDB configuration
-# Important: For creating a DB for each one of use, we need to use an unique name in the DB_NAME constant,
-# like our name un snake_case, e.g.: jose_manuel_camacho
+# Creamos la conexión con MongoDB y recuperamos la BD que vamos a utilizar
 connection = Connection(host='localhost', port=27017)
 DB_NAME = 'jose_perez_yazquez'
 db =  connection[DB_NAME]
 
+## Definición de los modelos, llamados Documentos por mongokit
+
+# Creamos el modelo para los tweets
 @connection.register
 class Tweet(Document):
     __collection__ = 'tweets'
@@ -114,6 +116,7 @@ class Tweet(Document):
         'created_at': datetime.datetime.utcnow
     }
 
+# Creamos el modelo para los usuarios
 @connection.register
 class User(Document):
     __collection__ = 'users'
@@ -142,7 +145,8 @@ class User(Document):
         }
     ]
 
-## Constructors for the documents
+## Constructores para los documentos
+
 # User getter and constructor
 def get_or_create_user(api_user):
     user = db.users.find_one({'screen_name': api_user['screen_name']})
@@ -181,11 +185,9 @@ def create_tweet(api_tweet, user):
     tweet['hashtags'] = hashtags
     tweet['urls'] = urls
     tweet['mentions'] = mentions
-
     tweet['user_id'] = user['_id']
 
     tweet.validate()
-
     tweet.save()
 
     return tweet
@@ -199,7 +201,7 @@ def twitter_date_to_datetime(twitter_date):
 
 # Vamos a obtener tweets, para ellos usaremos la API y veremos que nos devuelve.
 def get_tweets(search_word):
-    # Twitter configuration, we need to use the parameters that we got before
+    # Twitter credentials
     CONSUMER_KEY = '****'
     CONSUMER_SECRET = '****'
     OAUTH_TOKEN = '****'
@@ -214,6 +216,7 @@ def get_tweets(search_word):
     search_results = twitter_api.search.tweets(q=search_word, count=count, lang='es')
 
     return search_results
+
 
 
 
